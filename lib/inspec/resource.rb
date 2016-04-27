@@ -110,3 +110,6 @@ require 'resources/json'
 require 'resources/yaml'
 require 'resources/csv'
 require 'resources/ini'
+
+
+require 'resources/cache'
