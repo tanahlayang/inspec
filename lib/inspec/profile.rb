@@ -58,16 +58,15 @@ module Inspec
     def info
       res = params.dup
       # add information about the controls
-      controls = res[:controls].map do |id, rule|
-        next if id.to_s.empty?
+      res[:controls] = res[:controls].map do |rule|
+        next if rule[:id].to_s.empty?
         data = rule.dup
         data.delete(:checks)
         data[:impact] ||= 0.5
         data[:impact] = 1.0 if data[:impact] > 1.0
         data[:impact] = 0.0 if data[:impact] < 0.0
-        [id, data]
-      end
-      res[:controls] = Hash[controls.compact]
+        data
+      end.compact
 
       # add information about the required attributes
       res[:attributes] = res[:attributes].map(&:to_hash) unless res[:attributes].nil? || res[:attributes].empty?
@@ -144,7 +143,8 @@ module Inspec
       end
 
       # iterate over hash of groups
-      params[:controls].each { |id, control|
+      params[:controls].each { |control|
+        id = control[:id]
         sfile = control[:source_location][:ref]
         sline = control[:source_location][:line]
         error.call(sfile, sline, nil, id, 'Avoid controls with empty IDs') if id.nil? or id.empty?
@@ -164,7 +164,7 @@ module Inspec
     end
 
     def controls_count
-      params[:controls].values.length
+      params[:controls].length
     end
 
     # generates a archive of a folder profile
@@ -235,8 +235,8 @@ module Inspec
     end
 
     def load_checks_params(params)
-      params[:controls] = controls = {}
-      params[:groups] = groups = {}
+      params[:controls] = controls = []
+      params[:groups] = groups = []
       prefix = @source_reader.target.prefix || ''
 
       if @runner_context.nil?
@@ -273,7 +273,8 @@ module Inspec
 
     def load_rule(rule, file, controls, groups)
       id = Inspec::Rule.rule_id(rule)
-      controls[id] = {
+      controls.push(
+        id: id,
         title: rule.title,
         desc: rule.desc,
         impact: rule.impact,
@@ -282,13 +283,18 @@ module Inspec
         checks: Inspec::Rule.checks(rule),
         code: rule.instance_variable_get(:@__code),
         source_location: rule.instance_variable_get(:@__source_location),
-      }
+      )
 
-      groups[file] ||= {
-        title: rule.instance_variable_get(:@__group_title),
-        controls: [],
-      }
-      groups[file][:controls].push(id)
+      g = groups.find { |x| x[:id] == file }
+      if g.nil?
+        g = {
+          id: file,
+          title: rule.instance_variable_get(:@__group_title),
+          controls: [],
+        }
+        groups.push(g)
+      end
+      g[:controls].push(id)
     end
   end
 end

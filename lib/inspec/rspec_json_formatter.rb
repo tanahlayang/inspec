@@ -118,7 +118,7 @@ class InspecRspecJson < InspecRspecMiniJson
   def example2control(example, profiles)
     profile = profiles[example[:profile_id]]
     return nil if profile.nil? || profile[:controls].nil?
-    profile[:controls][example[:id]]
+    profile[:controls].find { |x| x[:id] == example[:id] }
   end
 
   def format_example(example)
