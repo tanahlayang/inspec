@@ -75,8 +75,13 @@ module Inspec::Resources
           params[k] = v
         else
           params['services'][name] = v
+
           # add the service identifier to its parameters
-          v.each { |service| service.params['service'] = name }
+          if v.is_a?(Array)
+            v.each { |service| service.params['service'] = name }
+          else
+            v.params['service'] = name
+          end
         end
       end
       params
