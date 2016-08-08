@@ -27,7 +27,8 @@ license :project_license
 
 default_version "v#{Inspec::VERSION}"
 
-source path: "#{Omnibus::Config.project_root}/../"
+source path: "#{Omnibus::Config.project_root}/../",
+       options: { exclude: [ "omnibus" ] }
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)
@@ -42,8 +43,5 @@ build do
   gem "build #{name}.gemspec", env: env
   gem "install #{name}-*.gem --no-document", env: env
 
-  # Dependecy added to avoid this pry error: "Sorry, you can't use Pry
-  # without Readline or a compatible library."
-  gem 'install rb-readline --no-document', env: env
   appbundle 'inspec'
 end
